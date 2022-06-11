@@ -1,7 +1,7 @@
 import math as m
 
 
-def trajectory(point, angle_deg):
+def trajectory_calc(point, angle_deg):
     """I take coordinates and angle (degrees) and generate an equation for the line collinear to this vector"""
     x0, y0 = point[0], point[1]
     angle = m.radians(angle_deg)

@@ -25,6 +25,7 @@ class Obstacle:
         self.H_STEP = 2 * self.BAR_SEMI_WIDTH + self.SEP
         # I want to get upper and lower bounds to use in main module
         self.LL, self.UL = 0, 0
+        self.prev_bar = None
 
     def find_edge(self):
         # this structure contains bars (their center's) on edges of our block, line by line
@@ -53,6 +54,7 @@ class Obstacle:
         if len(self.bars[bar[1]]) == 0:
             # in case there aren't any items in the list left, get rid of the corresponding key
             self.bars.pop(bar[1])
+        self.prev_bar = bar
 
     def getlog(self, extended=False):
         import pprint as p
