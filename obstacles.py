@@ -33,8 +33,6 @@ class Obstacle:
         self.edge = {}
         for lvl in self.bars:
             self.edge[lvl] = [self.bars[lvl][0][0], self.bars[lvl][-1][0]]
-            # line = {point: [[(a,b,c), (Dx, Dy)], ....]}
-            self.lines[self.bars[lvl][0]] = [[(0,1,)],]
         self.UL = round(max(self.edge) + self.BAR_SEMI_HEIGHT, 2)
         self.LL = round(min(self.edge) - self.BAR_SEMI_HEIGHT, 2)
 

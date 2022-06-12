@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 import obstacles as o
 from auxfunc import *
 
-lifes = 3
+
 PAD_LEVEL = -220
 WALLX = 240
 WALLY = [PAD_LEVEL + 10 + 5, 248]
@@ -31,22 +31,17 @@ w._root.iconphoto(False, icon)
 w.bgcolor(focus_color)
 
 ball = t.RawTurtle(w)
-# ball.shape("circle")
+ball.shape("circle")
 ball.penup()
 ball.hideturtle()
 ball.goto(0, PAD_LEVEL + 10 + 5)
-# ball.shapesize(0.5, 0.5)
+ball.shapesize(0.5, 0.5)
 ball.pendown()
 ball.showturtle()
-ball.seth(30)
+ball.seth(40)
 ball.speed(0)
 
 
-def igoto(point):
-    # this function slows ball's movement but only when it travels inbetween 2 points
-    ball.speed(2)
-    ball.goto(point)
-    ball.speed(0)
 
 
 pad = t.RawTurtle(w)
@@ -96,32 +91,30 @@ def place_bars(hide=True, skip=True):
 
 place_bars()
 
-parasite_ends_buffer = []
-parasite_line = None
-
 
 def interact(trajectory):
     """we scan all bar levels, intersect those levels one by one with a given trajectory to find some cell to count.
      Before proceeding to the next cell, we also check possible side interactons for each cell."""
     for lvl in obs.bars:
-        check_lvl = line_intersection(trajectory, (0, 1, -lvl + obs.BAR_SEMI_HEIGHT))
+        check_lvl = line_intersection(trajectory, (0, 1, -lvl + obs.BAR_SEMI_HEIGHT + 5))
         for point in obs.bars[lvl]:
-            if abs(point[0] - check_lvl[0]) <= obs.BAR_SEMI_WIDTH and \
-                    (obs.prev_bar is None or not abs(ball.pos()[0] - obs.prev_bar[0]) < obs.BAR_SEMI_WIDTH):
+            if abs(point[0] - check_lvl[0]) <= obs.BAR_SEMI_WIDTH+5 and \
+                    (obs.prev_bar is None or not abs(ball.pos()[0] - obs.prev_bar[0]) < obs.BAR_SEMI_WIDTH+5):
                 print("horizon", point)
                 obs.remove(point)
                 # reflect from the bottom of that bar
-                tes3 = t.RawTurtle(w)
-                tes3.goto(check_lvl)
+                # tes3 = t.RawTurtle(w)
+                # tes3.penup()
+                # tes3.goto(check_lvl)
                 goal = check_lvl
                 heading = hor(ball.heading())
                 return goal, heading
             else:
-                check_lside = line_intersection(trajectory, (1, 0, -point[0] + obs.BAR_SEMI_WIDTH))
-                check_rside = line_intersection(trajectory, (1, 0, -point[0] - obs.BAR_SEMI_WIDTH))
+                check_lside = line_intersection(trajectory, (1, 0, -point[0] + obs.BAR_SEMI_WIDTH+5))
+                check_rside = line_intersection(trajectory, (1, 0, -point[0] - obs.BAR_SEMI_WIDTH-5))
                 if abs(check_lside[1] - lvl) < obs.BAR_SEMI_HEIGHT and \
                         (obs.prev_bar is None or not check_lside[0] > obs.prev_bar[0] + obs.BAR_SEMI_WIDTH) \
-                        and not abs(ball.pos()[0] - obs.prev_bar[0]) < obs.BAR_SEMI_WIDTH:
+                        and not abs(ball.pos()[0] - obs.prev_bar[0]) < obs.BAR_SEMI_WIDTH+5:
                     print("lside", point)
                     obs.remove(point)
                     # reflect from the left bar's side
@@ -130,9 +123,13 @@ def interact(trajectory):
                     return goal, heading
                 elif abs(check_rside[1] - lvl) < obs.BAR_SEMI_HEIGHT and \
                         (obs.prev_bar is None or not check_rside[0] < obs.prev_bar[0] - obs.BAR_SEMI_WIDTH) \
-                        and not abs(ball.pos()[0] - obs.prev_bar[0]) < obs.BAR_SEMI_WIDTH:
+                        and not abs(ball.pos()[0] - obs.prev_bar[0]) < obs.BAR_SEMI_WIDTH+5:
                     print("rside", point)
                     obs.remove(point)
+                    # tes4 = t.RawTurtle(w)
+                    # tes4.penup()
+                    # tes4.goto(check_rside)
+                    # tes4.shapesize(0.5, 0.5)
                     # reflect from the right cell's side
                     goal = check_rside
                     heading = ver(ball.heading())
@@ -140,13 +137,16 @@ def interact(trajectory):
 
 
 def iigoto(goal, goal_heading):
-    igoto(goal)
+    # this function slows ball's movement but only when it travels inbetween 2 points
+    ball.speed(2)
+    ball.goto(goal)
+    ball.speed(0)
     ball.seth(goal_heading)
 
 
 score_points = [0]
 
-for _ in range(18):
+for _ in range(50):
     tr = trajectory_calc(ball.pos(), ball.heading())
     # we may reach bars
     score_point = interact(tr)
@@ -159,19 +159,21 @@ for _ in range(18):
         check_vw = line_intersection(tr, (1, 0, -WALLX)), line_intersection(tr, (1, 0, WALLX))
         check_hw = line_intersection(tr, (0, 1, -WALLY[1])), line_intersection(tr, (0, 1, -WALLY[0]))
         # we may reach one of 2 vertical walls, but have to if we haven't done that already
-        if ball.pos()[0] != WALLX and WALLY[0] < check_vw[0][1] < WALLY[1]:
-            igoto(check_vw[0])
-            ball.seth(ver(ball.heading()))
+        if WALLY[0] < check_vw[0][1] < WALLY[1] and WALLY[0] < check_vw[1][1] < WALLY[1]:
+            print("double wall")
+            if score_points[-1][1] < check_vw[0][1]:
+                iigoto(check_vw[1], ver(ball.heading()))
+            else:
+                iigoto(check_vw[0], ver(ball.heading()))
+        elif ball.pos()[0] != WALLX and WALLY[0] < check_vw[0][1] < WALLY[1]:
+            iigoto(check_vw[0], ver(ball.heading()))
         elif ball.pos()[0] != -WALLX and WALLY[0] < check_vw[1][1] < WALLY[1]:
-            igoto(check_vw[1])
-            ball.seth(ver(ball.heading()))
+            iigoto(check_vw[1], ver(ball.heading()))
         # same for 2 horizontal walls
         elif ball.pos()[1] != WALLY[1] and abs(check_hw[0][0]) < WALLX:
-            igoto(check_hw[0])
-            ball.seth(hor(ball.heading()))
+            iigoto(check_hw[0], hor(ball.heading()))
         elif ball.pos()[1] != WALLY[0] and abs(check_hw[1][0]) < WALLX:
-            igoto(check_hw[1])
-            ball.seth(hor(ball.heading()))
+            iigoto(check_hw[1], hor(ball.heading()))
             if abs(pad.xcor() - ball.xcor()) < 50:
                 print('catch')
             else:
